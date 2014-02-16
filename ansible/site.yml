@@ -1,0 +1,17 @@
+- hosts: all
+
+  vars:
+    branch: master
+    repo: https://github.com/dima-exe/demo-deploy-using-ansible-and-mina.git
+    user: demo
+    rails_env: production
+    db_name: "{{ user }}_{{ rails_env }}"
+    db_password: "{{ lookup('password', 'credentials/' + user + '.postgres length=30') }}"
+    deploy_to: "/home/{{ user }}/application"
+
+  tasks:
+    - include: provision.yml
+    - include: deploy.yml
+
+  handlers:
+    - include: handlers.yml

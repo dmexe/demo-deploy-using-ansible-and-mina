@@ -1,0 +1,59 @@
+- name: create /etc/apt/sources.list
+  template: src=templates/sources.list dest=/etc/apt/sources.list
+
+- name: update apt cache
+  apt: update_cache=yes
+
+- name: upgrade system
+  apt: upgrade=safe
+
+- name: install required packages
+  apt: pkg={{ item }}
+  with_items:
+    - build-essential
+    - git-core
+    - libxml2-dev
+    - ruby1.9.1-dev
+    - nodejs
+    - python-psycopg2
+    - git-core
+
+- name: install required gems
+  gem: name={{ item }} state=present user_install=no
+  with_items:
+    - mina
+    - bundler
+
+- name: install postgresql packages
+  apt: pkg={{ item }}
+  with_items:
+    - postgresql-9.1
+    - libpq-dev
+
+- name: ensure postgresql service up and running
+  service: name=postgresql enabled=yes state=started
+
+- name: create database
+  sudo_user: postgres
+  postgresql_db: name={{ db_name }} encoding='UTF-8' login_host=/var/run/postgresql
+
+- name: create database user
+  sudo_user: postgres
+  postgresql_user: db={{ db_name }} name={{ user }} password={{ db_password }} priv=ALL login_host=/var/run/postgresql
+
+- name: install nginx package
+  apt: pkg=nginx
+
+- name: remove default nginx site
+  file: dest=/etc/nginx/{{ item }}/default state=absent
+  with_items:
+    - sites-enabled
+    - sites-available
+  notify: restart nginx service
+
+- name: create nginx vhost
+  template: src=templates/nginx.conf dest=/etc/nginx/sites-enabled/demo
+  notify: restart nginx service
+
+- name: ensure nginx service up and running
+  service: name=nginx enabled=yes state=started

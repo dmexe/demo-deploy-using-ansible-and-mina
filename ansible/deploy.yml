@@ -1,0 +1,55 @@
+- name: create deploy user
+  user: name={{ user }} createhome=true system=false
+
+- name: create directories for deploy
+  file: dest={{ deploy_to }}/{{ item }} state=directory owner={{ user }} group={{ user }}
+  with_items:
+    - ""
+    - releases
+    - shared
+    - shared/tmp
+    - shared/tmp/pids
+    - shared/config
+    - shared/system
+    - shared/log
+
+- name: create files for deploy
+  template: src=templates/{{ item }} dest={{ deploy_to }}/shared/config/{{ item }} owner={{ user }}
+  with_items:
+    - puma.rb
+    - database.yml
+  notify: restart webapp
+
+- name: create deploy.rb
+  template: src=templates/deploy.rb dest=/home/{{ user }}/deploy.rb owner={{ user }}
+  notify: restart webapp
+
+- name: create deploy.sh
+  template: src=templates/deploy.sh dest=/home/{{ user }}/deploy.sh mode="0755" owner={{ user }}
+  notify: restart webapp
+
+- name: clone repo
+  git: >
+    repo={{ repo }} dest={{ deploy_to }}/scm
+    update=true force=true bare=true version={{ branch }}
+  sudo_user: "{{ user }}"
+  environment:
+    GIT_SSL_NO_VERIFY: true
+  register: clone_result
+
+- name: is deploy exists
+  shell: >
+    test -f {{ deploy_to }}/current/{{ clone_result.after }} && echo "yes" || echo "no"
+  register: is_deploy_exists_result
+  changed_when: "'no' in is_deploy_exists_result.stdout"
+
+- name: run deploy
+  shell: >
+    /home/{{ user }}/deploy.sh {{ clone_result.after }} chdir=/home/{{ user }}
+  sudo_user: "{{ user }}"
+  when: is_deploy_exists_result|changed
+  notify: restart webapp
+
+- name: create upstart jobs
+  template: dest=/etc/init/{{ user }}-webapp.conf src=templates/upstart.conf
+  notify: restart webapp

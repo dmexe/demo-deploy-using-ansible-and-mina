@@ -1,0 +1,5 @@
+- name: restart nginx service
+  service: name=nginx state=restarted
+
+- name: restart webapp
+  service: name={{ user }}-webapp state=restarted

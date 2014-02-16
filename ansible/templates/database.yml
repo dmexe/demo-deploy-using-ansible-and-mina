@@ -1,0 +1,9 @@
+{{ rails_env }}:
+  database: {{ db_name }}
+  adapter: postgresql
+  host: localhost
+  username: {{ user }}
+  password: {{ db_password }}
+  encoding: unicode
+  min_messages: WARNING
+  template: template0
