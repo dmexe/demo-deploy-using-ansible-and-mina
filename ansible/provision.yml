@@ -14,7 +14,7 @@
 - name: remove old ruby version
   apt: pkg={{ item }} state=absent
   with_items:
-    - ruby
+    - ruby1.8
 
 - name: install required packages
   apt: pkg={{ item }}
