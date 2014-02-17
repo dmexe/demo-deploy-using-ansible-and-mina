@@ -1,3 +1,7 @@
+- name: fix locales
+  shell: >
+    locale-gen en_US.UTF-8 && dpkg-reconfigure -fnoninteractive locales && update-locale LC_ALL="en_US.UTF-8" LANG="en_US.UTF-8" LANGUAGE="en_US" && touch ~/.locale_ok creates=~/.locale_ok
+
 - name: create /etc/apt/sources.list
   template: src=templates/sources.list dest=/etc/apt/sources.list
 
