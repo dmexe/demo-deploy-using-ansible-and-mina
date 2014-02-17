@@ -11,6 +11,11 @@
 - name: upgrade system
   apt: upgrade=safe
 
+- name: remove old ruby version
+  apt: pkg={{ item }} state=absent
+  with_items:
+    - ruby
+
 - name: install required packages
   apt: pkg={{ item }}
   with_items:
